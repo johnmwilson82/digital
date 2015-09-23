@@ -68,10 +68,14 @@ gf2n_init(gf2n *self, PyObject *args, PyObject *kwds)
                 substr[2] = 0; // Null char - ends string
                 uint32_t val;
                 sscanf(substr, "%x", &val);
-                valbytes[i++] = val;
+                valbytes[i++] = (uint8_t) val;
             }
+            tmp = self->value;
+            npy_intp length[1];
+            length[0] = i;
 
-            self->value = PyArray_SimpleNewFromData(1, (npy_intp*) &i, NPY_UBYTE, valbytes);
+            self->value = PyArray_SimpleNewFromData(1, length, NPY_UBYTE, (void*) valbytes);
+            Py_XDECREF(tmp);
         }
         else if(PyArray_Check(value)) {
             tmp = self->value;
@@ -82,7 +86,6 @@ gf2n_init(gf2n *self, PyObject *args, PyObject *kwds)
         else
             return -1;
     }
-
     return 0;
 }
 
