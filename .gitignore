@@ -2,3 +2,4 @@
 *.so
 core
 build/
+.cache/

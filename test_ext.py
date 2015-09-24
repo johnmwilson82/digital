@@ -1,18 +1,27 @@
 import numpy
 import gf2n
+import pytest
 
-test1 = gf2n.gf2n(0x101, 0x8f)
+@pytest.mark.parametrize("generator, value, degree", [
+    (0x101, 0x8f, 8),
+    (0x1234, 0x321, 12),
+])
+def test_instantiate(generator, value, degree):
+    test = gf2n.gf2n(generator, value)
+    assert(test.generator == generator)
+    assert(test.value == value)
+    assert(test.degree == degree)
 
-print hex(test1.generator)
-print hex(test1.value)
-print test1.degree
+@pytest.mark.parametrize("generator, v1, v2, out", [
+    (0x101, 0x8f, 0x8f, 0x1e),
+])
+def test_instantiate(generator, v1, v2, out):
+    test1 = gf2n.gf2n(generator, v1)
+    test2 = gf2n.gf2n(generator, v2)
+    res = test1 + test2
 
-test2 = gf2n.gf2n(0x1234, 0x321)
+    assert(res.generator == test1.generator)
+    assert(res.value == out)
+    assert(res.degree == test1.degree)
 
-print hex(test2.generator)
-print hex(test2.value)
-print test2.degree
 
-test3 = test1 + test1
-
-print hex(test3.value)
