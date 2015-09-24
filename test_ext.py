@@ -1,10 +1,16 @@
 import numpy
 import gf2n
 
-test = gf2n.gf2n(16, numpy.array([1, 2, 3, 4]))
+test1 = gf2n.gf2n(0x101, 0x01)
 
-print test.value
+print hex(test1.generator)
+print hex(test1.value)
 
-test = gf2n.gf2n(16, "1010101010104321")
+test2 = gf2n.gf2n(0x1234, 0x321)
 
-print [format(i, '02x') for i in test.value]
+print hex(test2.generator)
+print hex(test2.value)
+
+test3 = test1 + test2
+
+print test3.value

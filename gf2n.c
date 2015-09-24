@@ -5,14 +5,14 @@
 
 typedef struct {
     PyObject_HEAD
-    int exponent;
-    PyObject* value;
+    uint32_t degree;
+    uint32_t value;
+    uint32_t generator;
 } gf2n;
 
 static void
 gf2n_dealloc(gf2n* self)
 {
-    Py_XDECREF(self->value);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -23,75 +23,50 @@ gf2n_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (gf2n *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->exponent = 1;
-        npy_intp length[1];
-        length[0] = 1;
-        self->value = PyArray_ZEROS(1, length, NPY_DOUBLE, 0);
-        if (self->value == NULL)
-        {
-            Py_DECREF(self);
-            return NULL;
-        }
+        self->degree = 1;
+        self->value = 0x0;
+        self->generator = 0x3;
     }
 
     return (PyObject *)self;
 }
 
+uint32_t
+highest_set_bit(uint32_t v)
+{
+    // From https://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
+    union { uint32_t u[2]; double d; } t; // temp
+
+    t.u[__FLOAT_WORD_ORDER==LITTLE_ENDIAN] = 0x43300000;
+    t.u[__FLOAT_WORD_ORDER!=LITTLE_ENDIAN] = v;
+    t.d -= 4503599627370496.0;
+    return (t.u[__FLOAT_WORD_ORDER==LITTLE_ENDIAN] >> 20) - 0x3FF;
+}
+
 static int
 gf2n_init(gf2n *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *value=NULL, *tmp;
+    int generator = 0;
+    int value = 0;
 
     static char *kwlist[] = {"exponent", "value", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "I|O", kwlist,
-                                    &self->exponent,
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "I|I", kwlist,
+                                    &generator,
                                     &value))
         return -1;
 
-    if (value) {
-        if(PyString_Check(value)) {
-            Py_ssize_t len = PyString_Size(value);
-            if(len == 0) return 0;
+    self->generator = generator;
+    self->value = value;
+    self->degree = highest_set_bit(generator) - 1;
 
-            char *charstr = malloc(sizeof(char) * len);
-            uint8_t *valbytes = malloc(sizeof(uint8_t) * (len+1)/2);
-
-            charstr = PyString_AsString(value);
-            int i = 0;
-
-            for (char* ptr = &charstr[len-2]; ptr >= charstr-1; ptr -= 2)
-            {
-                char substr[3];
-                substr[0] = (ptr < charstr) ? '0' : ptr[0];
-                substr[1] = ptr[1];
-                substr[2] = 0; // Null char - ends string
-                uint32_t val;
-                sscanf(substr, "%x", &val);
-                valbytes[i++] = (uint8_t) val;
-            }
-            tmp = self->value;
-            npy_intp length[1];
-            length[0] = i;
-
-            self->value = PyArray_SimpleNewFromData(1, length, NPY_UBYTE, (void*) valbytes);
-            Py_XDECREF(tmp);
-        }
-        else if(PyArray_Check(value)) {
-            tmp = self->value;
-            Py_INCREF(value);
-            self->value = value;
-            Py_XDECREF(tmp);
-        }
-        else
-            return -1;
-    }
     return 0;
 }
 
 static PyMemberDef gf2n_members[] = {
-    {"exponent", T_UINT, offsetof(gf2n, exponent), 0, "exponent"},
-    {"value", T_OBJECT_EX, offsetof(gf2n, value), 0, "value"},
+    {"degree", T_UINT, offsetof(gf2n, degree), 0, "exponent"},
+    {"generator", T_UINT, offsetof(gf2n, generator), 0, "generator"},
+    {"value", T_UINT, offsetof(gf2n, value), 0, "value"},
     {NULL}
 };
 
