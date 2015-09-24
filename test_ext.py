@@ -1,7 +1,7 @@
 import numpy
 import gf2n
 
-test1 = gf2n.gf2n(0x101, 0x01)
+test1 = gf2n.gf2n(0x101, 0x8f)
 
 print hex(test1.generator)
 print hex(test1.value)
@@ -13,6 +13,6 @@ print hex(test2.generator)
 print hex(test2.value)
 print test2.degree
 
-test3 = test1 + test2
+test3 = test1 + test1
 
-print test3.value
+print hex(test3.value)
