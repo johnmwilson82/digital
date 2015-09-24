@@ -58,7 +58,7 @@ gf2n_init(gf2n *self, PyObject *args, PyObject *kwds)
 
     self->generator = generator;
     self->value = value;
-    self->degree = highest_set_bit(generator) - 1;
+    self->degree = highest_set_bit(generator);
 
     return 0;
 }
@@ -71,6 +71,7 @@ static PyMemberDef gf2n_members[] = {
 };
 
 static PyMethodDef gf2n_methods[] = {
+    {"__add__", gf2n_add,
     {NULL},
 };
 
