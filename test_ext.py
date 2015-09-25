@@ -13,9 +13,10 @@ def test_instantiate(generator, value, degree):
     assert(test.degree == degree)
 
 @pytest.mark.parametrize("generator, v1, v2, out", [
-    (0x101, 0x8f, 0x8f, 0x1e),
+    (0x101, 0x8f, 0x8f, 0x0),
+    (0x101, 0x12, 0x32, 0x20),
 ])
-def test_instantiate(generator, v1, v2, out):
+def test_add(generator, v1, v2, out):
     test1 = gf2n.gf2n(generator, v1)
     test2 = gf2n.gf2n(generator, v2)
     res = test1 + test2
@@ -24,4 +25,17 @@ def test_instantiate(generator, v1, v2, out):
     assert(res.value == out)
     assert(res.degree == test1.degree)
 
+@pytest.mark.parametrize("generator, v1, v2, out", [
+    (0x101, 0x43, 0x32, 0x71),
+    (0x101, 0x12, 0x44, 0x56),
+    (0x101, 0x1e, 0x8f, 0x91),
+])
+def test_sub(generator, v1, v2, out):
+    test1 = gf2n.gf2n(generator, v1)
+    test2 = gf2n.gf2n(generator, v2)
+    res = test1 - test2
+
+    assert(res.generator == test1.generator)
+    assert(res.value == out)
+    assert(res.degree == test1.degree)
 

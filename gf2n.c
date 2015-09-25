@@ -69,7 +69,7 @@ gf2n_init(gf2n *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-gf2n_add(PyObject *obj_v, PyObject *obj_w)
+gf2n_xor(PyObject *obj_v, PyObject *obj_w)
 {
     gf2n *v = (gf2n*) obj_v;
     gf2n *w = (gf2n*) obj_w;
@@ -77,7 +77,8 @@ gf2n_add(PyObject *obj_v, PyObject *obj_w)
     if (v->generator != w->generator)
         return (PyObject*) NULL;
 
-    uint32_t val = (v->value + w->value) % (2 << (w->degree - 1));
+    uint32_t val = w->value ^ v->value;
+
     return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
 }
 
@@ -93,8 +94,8 @@ static PyMethodDef gf2n_methods[] = {
 };
 
 static PyNumberMethods gf2n_as_number = {
-    gf2n_add,               /* __add__ */
-    //gf2n_sub,               /* __sub__ */
+    gf2n_xor,               /* __add__ */
+    gf2n_xor,               /* __sub__ */
     //gf2n_mul,               /* __mul__ */
     //gf2n_div,               /* __div__ */
     //gf2n_mod,               /* __mod__ */
