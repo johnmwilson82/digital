@@ -69,6 +69,52 @@ gf2n_init(gf2n *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
+gf2n_mul(PyObject *obj_v, PyObject *obj_w)
+{
+    gf2n *v = (gf2n*) obj_v;
+    gf2n *w = (gf2n*) obj_w;
+
+    if (v->generator != w->generator)
+        return (PyObject*) NULL;
+
+    // From an introduction to Galois Fields and Reed-Solomon coding by
+    // James Westall and James Martin
+
+    uint32_t v1 = v->value;
+    uint32_t v2 = w->value;
+    uint32_t poly = v->generator & ((1 << v->degree) - 1);
+
+    int prod = 0, k, mask;
+    int m = v->degree;
+
+    for (k = 0; k < m; k++)
+    {
+        if(v1 & 1)
+        {
+            prod ^= (v2 << k);
+        }
+        v1 >>= 1;
+        if (v1 == 0)
+            break;
+    }
+    printf("%x\n", prod);
+    mask = 1 << m;
+    mask <<= m - 2;
+
+    for (k = m - 2; k >= 0; k--)
+    {
+        if (prod & mask)
+        {
+            prod &= ~mask;
+            prod ^= (poly << k);
+        }
+        mask >>= 1;
+    }
+
+    return gf2n_NEW(v->ob_type, v->degree, prod, v->generator);
+}
+
+static PyObject *
 gf2n_xor(PyObject *obj_v, PyObject *obj_w)
 {
     gf2n *v = (gf2n*) obj_v;
@@ -96,7 +142,7 @@ static PyMethodDef gf2n_methods[] = {
 static PyNumberMethods gf2n_as_number = {
     gf2n_xor,               /* __add__ */
     gf2n_xor,               /* __sub__ */
-    //gf2n_mul,               /* __mul__ */
+    gf2n_mul,               /* __mul__ */
     //gf2n_div,               /* __div__ */
     //gf2n_mod,               /* __mod__ */
     //gf2n_divmod,            /* __divmod__ */
