@@ -79,6 +79,7 @@ gf2n_mul(PyObject *obj_v, PyObject *obj_w)
 
     // From an introduction to Galois Fields and Reed-Solomon coding by
     // James Westall and James Martin
+    // http://people.cs.clemson.edu/~westall/851/rs-code.pdf
 
     uint32_t v1 = v->value;
     uint32_t v2 = w->value;
@@ -128,6 +129,91 @@ gf2n_xor(PyObject *obj_v, PyObject *obj_w)
     return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
 }
 
+static PyObject *
+gf2n_or(PyObject *obj_v, PyObject *obj_w)
+{
+    gf2n *v = (gf2n*) obj_v;
+    gf2n *w = (gf2n*) obj_w;
+
+    if (v->generator != w->generator)
+        return (PyObject*) NULL;
+
+    uint32_t val = w->value | v->value;
+
+    return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
+}
+
+static PyObject *
+gf2n_and(PyObject *obj_v, PyObject *obj_w)
+{
+    gf2n *v = (gf2n*) obj_v;
+    gf2n *w = (gf2n*) obj_w;
+
+    if (v->generator != w->generator)
+        return (PyObject*) NULL;
+
+    uint32_t val = w->value & v->value;
+
+    return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
+}
+
+static PyObject *
+gf2n_mod(PyObject *obj_v, PyObject *obj_w)
+{
+    if (!PyInt_Check(obj_w))
+        return (PyObject*) NULL;
+
+    gf2n *v = (gf2n*) obj_v;
+    long modval = PyInt_AsLong(obj_w);
+
+    uint32_t val = v->value % modval;
+
+    return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
+}
+
+static PyObject *
+gf2n_lshift(PyObject *obj_v, PyObject *obj_w)
+{
+    if (!PyInt_Check(obj_w))
+        return (PyObject*) NULL;
+
+    gf2n *v = (gf2n*) obj_v;
+
+    long shift = PyInt_AsLong(obj_w);
+
+    uint32_t val = (v->value << shift) & ((1 << v->degree) - 1);
+
+    return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
+}
+
+static PyObject *
+gf2n_rshift(PyObject *obj_v, PyObject *obj_w)
+{
+    if (!PyInt_Check(obj_w))
+        return (PyObject*) NULL;
+
+    gf2n *v = (gf2n*) obj_v;
+
+    long shift = PyInt_AsLong(obj_w);
+
+    uint32_t val = (v->value >> shift);
+
+    return gf2n_NEW(v->ob_type, v->degree, val, v->generator);
+}
+
+static PyObject *
+gf2n_nochange(PyObject * obj_v)
+{
+    return obj_v;
+}
+
+static int
+gf2n_nonzero(PyObject *obj_v)
+{
+    gf2n *v = (gf2n*) obj_v;
+    return (v->value == 0) ? 0 : 1;
+}
+
 static PyMemberDef gf2n_members[] = {
     {"degree", T_UINT, offsetof(gf2n, degree), 0, "exponent"},
     {"generator", T_UINT, offsetof(gf2n, generator), 0, "generator"},
@@ -143,26 +229,26 @@ static PyNumberMethods gf2n_as_number = {
     gf2n_xor,               /* __add__ */
     gf2n_xor,               /* __sub__ */
     gf2n_mul,               /* __mul__ */
-    //gf2n_div,               /* __div__ */
-    //gf2n_mod,               /* __mod__ */
-    //gf2n_divmod,            /* __divmod__ */
-    //gf2n_pow,               /* __pow__ */
-    //gf2n_neg,               /* __neg__ */
-    //gf2n_pos,               /* __pos__ */
-    //gf2n_abs,               /* __abs__ */
-    //gf2n_nonzero,           /* __nonzero__ */
-    //gf2n_invert,            /* __invert__ */
-    //gf2n_lshift,            /* __lshift__ */
-    //gf2n_rshift,            /* __rshift__ */
-    //gf2n_and,               /* __and__ */
-    //gf2n_xor,               /* __xor__ */
-    //gf2n_or,                /* __or__ */
-    //gf2n_coerce,            /* __coerce__ */
-    //gf2n_int,               /* __int__ */
-    //gf2n_long,              /* __long__ */
-    //gf2n_float,             /* __float__ */
-    //gf2n_oct,               /* __oct__ */
-    //gf2n_hex,               /* __hex__ */
+    0,                      /* __div__ */
+    gf2n_mod,               /* __mod__ */
+    0,                      /* __divmod__ */
+    0, //gf2n_pow,             /* __pow__ */
+    0,                      /* __neg__ */
+    gf2n_nochange,          /* __pos__ */
+    gf2n_nochange,          /* __abs__ */
+    gf2n_nonzero,           /* __nonzero__ */
+    0,                      /* __invert__ */
+    gf2n_lshift,            /* __lshift__ */
+    gf2n_rshift,            /* __rshift__ */
+    gf2n_and,               /* __and__ */
+    gf2n_xor,               /* __xor__ */
+    gf2n_or,                /* __or__ */
+    0,                      /* __coerce__ */
+    0,                      /* __int__ */
+    0,                      /* __long__ */
+    0,                      /* __float__ */
+    0,                      /* __oct__ */
+    0,                      /* __hex__ */
 };
 
 static PyTypeObject gf2nType = {
@@ -186,7 +272,7 @@ static PyTypeObject gf2nType = {
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES,        /*tp_flags*/
     "GF(2^n) objects",         /* tp_doc */
     0,                         /* tp_traverse */
     0,                         /* tp_clear */
