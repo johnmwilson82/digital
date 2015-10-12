@@ -16,6 +16,13 @@ def get_highest_set_bit(a):
 
     return i
 
+def packed_to_unpacked(packed_poly):
+    ret = []
+    for i in range(get_highest_set_bit(packed_poly), 0, -1):
+        if packed_poly & (1 << i):
+            ret.append(i)
+    return ret
+
 def find_prime_factors(a):
     ret = []
     def next_prime_factor(aa):
@@ -76,7 +83,6 @@ def gf2_gcd(a, b):
         b = rem
         (quot, rem) = gf2_div_with_rem(a, b)
     return b
-
 
 if __name__ == "__main__":
     #tt = find_prime_factors(99)

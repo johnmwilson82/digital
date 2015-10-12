@@ -12,8 +12,7 @@ class GF2n_poly(object):
         if other.degree < self.degree:
             self.poly += [0, ] * (other.degree - self.degree)
             self.degree = other.degree
-        
-        
+
     @property
     def degree(self):
         return degree
